@@ -8,7 +8,7 @@ import './App.css'
 
 const App = () => {
   return (
-    <div className="min-h-screen bg-black text-white">
+    <div className=" bg-black text-white">
       <Hero />
       <TrustSignals />
       <HowItWorks />
