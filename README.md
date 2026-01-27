@@ -106,15 +106,15 @@ If required for compliance:
 
 ## 🧩 Leo Smart Contracts (Wave-wise Plan)
 
-### Wave 1 (MVP) 🎯
-- [ ] Create ride
-- [ ] Mint temporary identity
-- [ ] Accept ride
+### Wave 1 (MVP) 🎯 ✅ IMPLEMENTED
+- [x] Create ride
+- [x] Mint temporary identity (`ride_identity.aleo`)
+- [x] Accept ride
 - [ ] Private payment escrow
-- [ ] Complete ride → identity burns
+- [x] Complete ride → identity burns
 
-### Wave 2
-- [ ] ZK proximity proofs
+### Wave 2 ✅ IMPLEMENTED
+- [x] ZK proximity proofs (`proximity_matching.aleo`)
 - [ ] Encrypted chat
 - [ ] Rating system (private)
 
@@ -148,11 +148,18 @@ If required for compliance:
 ```
 GhostMove/
 ├── README.md                 # This file
-├── interface-ui/            # Frontend React application
-│   ├── src/
-│   ├── package.json
-│   └── README.md
-└── [smart-contracts]/       # Leo smart contracts (to be added)
+├── programs/                # Leo smart contracts
+│   ├── ride_identity/      # Temporary ZK Identity Tokens
+│   │   ├── src/main.leo
+│   │   └── program.json
+│   ├── proximity_matching/ # ZK Proximity Proofs
+│   │   ├── src/main.leo
+│   │   └── program.json
+│   └── README.md           # Programs documentation
+└── interface-ui/            # Frontend React application
+    ├── src/
+    ├── package.json
+    └── README.md
 ```
 
 ---
@@ -174,15 +181,34 @@ pnpm install
 pnpm dev
 ```
 
-### Smart Contracts (Coming Soon)
+### Smart Contracts
+
+The core privacy primitives are implemented! See `programs/README.md` for detailed documentation.
 
 ```bash
 # Install Leo
 curl -L https://get.aleo.org/leo | bash
 
-# Compile contracts
+# Build ride identity program
+cd programs/ride_identity
+leo build
+
+# Build proximity matching program
+cd ../proximity_matching
 leo build
 ```
+
+#### Implemented Programs
+
+1. **`ride_identity.aleo`** - Temporary ZK Identity Tokens
+   - Mint non-transferable identities for each ride
+   - Auto-expire after ride completion
+   - Stored in encrypted state (no public visibility)
+
+2. **`proximity_matching.aleo`** - ZK Proximity Proofs
+   - Drivers prove proximity without revealing coordinates
+   - Uses Haversine formula in zero-knowledge
+   - Only boolean result (within range) is public
 
 ---
 

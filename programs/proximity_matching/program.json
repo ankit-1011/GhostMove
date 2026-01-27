@@ -1,0 +1,6 @@
+{
+  "program": "proximity_matching.aleo",
+  "version": "0.0.0",
+  "description": "Zero-Knowledge Proximity Matching for GhostMove - Prove proximity without revealing location",
+  "license": "MIT"
+}

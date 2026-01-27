@@ -1,0 +1,6 @@
+{
+  "program": "ride_identity.aleo",
+  "version": "0.0.0",
+  "description": "Temporary Zero-Knowledge Identity Tokens for GhostMove rides",
+  "license": "MIT"
+}
