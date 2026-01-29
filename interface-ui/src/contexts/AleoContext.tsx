@@ -1,4 +1,5 @@
-import { createContext, useContext, useState, ReactNode } from 'react'
+import { createContext, useContext, useState } from 'react'
+import type { ReactNode } from 'react'
 import { hasAnyWalletInstalled, getInstalledWallets } from '../utils/walletDetection'
 import * as aleoService from '../services/aleoService'
 
@@ -43,8 +44,6 @@ export const AleoProvider = ({ children }: { children: ReactNode }) => {
     if (!hasAnyWalletInstalled()) {
       throw new Error('NO_WALLET_INSTALLED')
     }
-
-    const installedWallets = getInstalledWallets()
     
     // Try to connect to Leo Wallet first (preferred)
     if ((window as any).leoWallet) {

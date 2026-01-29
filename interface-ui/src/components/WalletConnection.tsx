@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useAleo } from '../contexts/AleoContext'
-import { detectWallets, getWalletDownloadLinks } from '../utils/walletDetection'
+import { detectWallets } from '../utils/walletDetection'
 
 const WalletConnection = () => {
   const { wallet, isConnected, connectWallet, disconnectWallet, checkWalletsInstalled } = useAleo()
