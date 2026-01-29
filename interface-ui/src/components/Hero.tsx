@@ -1,4 +1,4 @@
-
+import bike from '../assets/OIP-removebg-preview.png'
 import WalletConnection from './WalletConnection'
 
 const Hero = () => {
@@ -68,13 +68,7 @@ const Hero = () => {
           {/* Animated Scooter Icon - moves along curved path */}
           <div className="absolute -top-20 left-0 animate-scooter-curve pointer-events-none">
             <div className="relative">
-              <i 
-                className="fas fa-motorcycle text-3xl text-orange-400" 
-                style={{ 
-                  filter: 'drop-shadow(0 0 10px rgba(251, 146, 60, 0.8))',
-                  textShadow: '0 0 20px rgba(251, 146, 60, 0.5)'
-                }}
-              ></i>
+              <img src={bike} alt="bike" className="w-20 h-15"  />
             </div>
           </div>
 
