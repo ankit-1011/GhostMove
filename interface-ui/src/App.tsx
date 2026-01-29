@@ -5,10 +5,11 @@ import Hero from './components/Hero'
 import TrustSignals from './components/TrustSignals'
 import HowItWorks from './components/HowItWorks'
 import CoreFeatures from './components/CoreFeatures'
-import Architecture from './components/Architecture'
-import RequestRidePage from './pages/RequestRide'
-import DriverModePage from './pages/DriverMode'
-import MyRidesPage from './pages/MyRides'
+// import Architecture from './components/Architecture'
+import OrderPizzaPage from './pages/RequestRide'
+import DeliveryModePage from './pages/DriverMode'
+import MyOrdersPage from './pages/MyRides'
+import FAQ from './components/FAQ'
 import Footer from './components/Footer'
 import './App.css'
 
@@ -32,11 +33,11 @@ const App = () => {
   const renderPage = () => {
     switch (currentPage) {
       case 'request-ride':
-        return <RequestRidePage />
+        return <OrderPizzaPage />
       case 'driver-mode':
-        return <DriverModePage />
+        return <DeliveryModePage />
       case 'my-rides':
-        return <MyRidesPage />
+        return <MyOrdersPage />
       case 'home':
       default:
         return (
@@ -45,7 +46,8 @@ const App = () => {
             <TrustSignals />
             <HowItWorks />
             <CoreFeatures />
-            <Architecture />
+            {/* <Architecture /> */}
+            <FAQ />
           </>
         )
     }

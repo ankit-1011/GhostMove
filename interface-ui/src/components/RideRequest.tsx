@@ -1,20 +1,33 @@
 import { useState } from 'react'
 import { useAleo } from '../contexts/AleoContext'
+import PizzaCart from './PizzaCart'
 
-const RideRequest = () => {
+interface CartItem {
+  pizza: {
+    id: string
+    name: string
+    description: string
+    price: number
+  }
+  quantity: number
+}
+
+const OrderRequest = () => {
   const { isConnected, createRideRequest } = useAleo()
-  const [pickupLat, setPickupLat] = useState('')
-  const [pickupLon, setPickupLon] = useState('')
-  const [maxDistance, setMaxDistance] = useState('2')
+  const [deliveryLat, setDeliveryLat] = useState('')
+  const [deliveryLon, setDeliveryLon] = useState('')
+  const [maxDistance, setMaxDistance] = useState('5')
   const [loading, setLoading] = useState(false)
-  const [rideId, setRideId] = useState<string | null>(null)
+  const [orderId, setOrderId] = useState<string | null>(null)
+  const [cartItems, setCartItems] = useState<CartItem[]>([])
+  const [cartTotal, setCartTotal] = useState(0)
 
   const handleGetCurrentLocation = () => {
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
         (position) => {
-          setPickupLat(position.coords.latitude.toFixed(6))
-          setPickupLon(position.coords.longitude.toFixed(6))
+          setDeliveryLat(position.coords.latitude.toFixed(6))
+          setDeliveryLon(position.coords.longitude.toFixed(6))
         },
         (error) => {
           console.error('Error getting location:', error)
@@ -26,6 +39,11 @@ const RideRequest = () => {
     }
   }
 
+  const handleCartUpdate = (items: CartItem[], total: number) => {
+    setCartItems(items)
+    setCartTotal(total)
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!isConnected) {
@@ -33,67 +51,121 @@ const RideRequest = () => {
       return
     }
 
+    if (cartItems.length === 0) {
+      alert('Please add at least one pizza to your cart')
+      return
+    }
+
     setLoading(true)
     try {
       const id = await createRideRequest({
-        pickupLat: parseFloat(pickupLat),
-        pickupLon: parseFloat(pickupLon),
+        pickupLat: parseFloat(deliveryLat),
+        pickupLon: parseFloat(deliveryLon),
         maxDistanceKm: parseFloat(maxDistance),
       })
-      setRideId(id)
-      alert(`Ride request created! Ride ID: ${id}`)
+      setOrderId(id)
+      alert(`Pizza order created! Order ID: ${id}`)
       // Reset form
-      setPickupLat('')
-      setPickupLon('')
-      setMaxDistance('2')
+      setDeliveryLat('')
+      setDeliveryLon('')
+      setMaxDistance('5')
+      setCartItems([])
+      setCartTotal(0)
     } catch (error) {
       console.error('Failed to create ride request:', error)
-      alert('Failed to create ride request. Please try again.')
+      alert('Failed to create order. Please try again.')
     } finally {
       setLoading(false)
     }
   }
 
-  if (rideId) {
+  if (orderId) {
     return (
       <div className="glass-card p-8 text-center">
         <div className="mb-6">
-          <i className="fas fa-check-circle text-5xl text-green-400 mb-4"></i>
-          <h3 className="text-2xl font-bold mb-2 text-white">Ride Request Created!</h3>
-          <p className="text-gray-300 mb-4">Your ride request has been submitted with encrypted location.</p>
-          <div className="bg-gradient-to-r from-cyan-500/20 to-teal-500/20 border border-cyan-500/30 rounded-lg p-4 mb-4">
-            <p className="text-sm text-gray-400 mb-1">Ride ID</p>
-            <p className="text-lg font-mono text-cyan-400">{rideId}</p>
+          <i className="fas fa-pizza-slice text-5xl text-green-400 mb-4"></i>
+          <h3 className="text-2xl font-bold mb-2 text-white">Order Placed!</h3>
+          <p className="text-gray-300 mb-4">Your pizza order has been submitted with encrypted delivery address.</p>
+          <div className="bg-gradient-to-r from-orange-500/20 to-amber-500/20 border border-orange-500/30 rounded-lg p-4 mb-4">
+            <p className="text-sm text-gray-400 mb-1">Order ID</p>
+            <p className="text-lg font-mono text-orange-400">{orderId}</p>
           </div>
+          {cartItems.length > 0 && (
+            <div className="bg-white/5 rounded-lg p-4 mb-4 text-left">
+              <p className="text-sm font-semibold text-gray-300 mb-2">Order Summary</p>
+              {cartItems.map((item) => (
+                <div key={item.pizza.id} className="flex justify-between text-sm mb-1">
+                  <span className="text-gray-400">{item.pizza.name} x{item.quantity}</span>
+                  <span className="text-orange-400">{item.pizza.price * item.quantity} Leo</span>
+                </div>
+              ))}
+              <div className="flex justify-between text-lg font-bold mt-2 pt-2 border-t border-white/10">
+                <span className="text-white">Total</span>
+                <span className="text-orange-400">{cartTotal} Leo</span>
+              </div>
+            </div>
+          )}
           <p className="text-sm text-gray-400">
-            Waiting for drivers to prove proximity... Your location remains encrypted.
+            Waiting for delivery person to prove proximity... Your address remains encrypted.
           </p>
         </div>
         <button
-          onClick={() => setRideId(null)}
-          className="px-6 py-2 bg-gradient-to-r from-cyan-500 to-teal-500 text-black font-semibold rounded-lg hover:from-cyan-400 hover:to-teal-400 transition-all"
+          onClick={() => {
+            setOrderId(null)
+            setCartItems([])
+            setCartTotal(0)
+          }}
+          className="px-6 py-2 bg-gradient-to-r from-orange-500 to-amber-500 text-black font-semibold rounded-lg hover:from-orange-400 hover:to-amber-400 transition-all"
         >
-          Create Another Ride
+          Place Another Order
         </button>
       </div>
     )
   }
 
   return (
-    <div className="glass-card p-8">
-      <div className="mb-6">
-        <h2 className="text-3xl font-bold mb-2 bg-gradient-to-r from-cyan-400 to-violet-400 bg-clip-text text-transparent">
-          Request a Ride
-        </h2>
-        <p className="text-gray-400">
-          Create an encrypted ride request. Your location will remain private.
-        </p>
+    <div className="space-y-8">
+      {/* Pizza Cart Section */}
+      <div className="glass-card p-8">
+        <div className="mb-6">
+          <h2 className="text-3xl font-bold mb-2 bg-gradient-to-r from-orange-400 to-violet-400 bg-clip-text text-transparent">
+            Select Your Pizzas
+          </h2>
+          <p className="text-gray-400">
+            Choose your favorite pizzas and add them to your cart.
+          </p>
+        </div>
+        <PizzaCart onCartUpdate={handleCartUpdate} />
       </div>
 
-      <form onSubmit={handleSubmit} className="space-y-6">
+      {/* Delivery Information */}
+      <div className="glass-card p-8">
+        <div className="mb-6">
+          <h2 className="text-3xl font-bold mb-2 bg-gradient-to-r from-orange-400 to-violet-400 bg-clip-text text-transparent">
+            Delivery Information
+          </h2>
+          <p className="text-gray-400">
+            Enter your delivery address. Your location will remain encrypted and private.
+          </p>
+        </div>
+
+        {cartItems.length > 0 && (
+          <div className="mb-6 p-4 bg-gradient-to-r from-orange-500/10 to-amber-500/10 border border-orange-500/20 rounded-lg">
+            <div className="flex items-center justify-between mb-2">
+              <p className="text-sm text-gray-400">Items in Cart</p>
+              <p className="text-lg font-bold text-orange-400">{cartItems.length} item(s)</p>
+            </div>
+            <div className="flex items-center justify-between">
+              <p className="text-sm text-gray-400">Total Amount</p>
+              <p className="text-xl font-bold text-white">{cartTotal} Leo</p>
+            </div>
+          </div>
+        )}
+
+        <form onSubmit={handleSubmit} className="space-y-6">
         <div>
           <label className="block text-sm font-semibold text-gray-300 mb-2">
-            Pickup Location
+            Delivery Address
           </label>
           <div className="grid grid-cols-2 gap-4 mb-3">
             <div>
@@ -101,9 +173,9 @@ const RideRequest = () => {
                 type="number"
                 step="any"
                 placeholder="Latitude"
-                value={pickupLat}
-                onChange={(e) => setPickupLat(e.target.value)}
-                className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-cyan-500/50"
+                value={deliveryLat}
+                onChange={(e) => setDeliveryLat(e.target.value)}
+                className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-orange-500/50"
                 required
               />
             </div>
@@ -112,9 +184,9 @@ const RideRequest = () => {
                 type="number"
                 step="any"
                 placeholder="Longitude"
-                value={pickupLon}
-                onChange={(e) => setPickupLon(e.target.value)}
-                className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-cyan-500/50"
+                value={deliveryLon}
+                onChange={(e) => setDeliveryLon(e.target.value)}
+                className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-orange-500/50"
                 required
               />
             </div>
@@ -122,7 +194,7 @@ const RideRequest = () => {
           <button
             type="button"
             onClick={handleGetCurrentLocation}
-            className="text-sm text-cyan-400 hover:text-cyan-300 flex items-center gap-2"
+            className="text-sm text-orange-400 hover:text-orange-300 flex items-center gap-2"
           >
             <i className="fas fa-map-marker-alt"></i>
             Use Current Location
@@ -131,37 +203,37 @@ const RideRequest = () => {
 
         <div>
           <label className="block text-sm font-semibold text-gray-300 mb-2">
-            Maximum Distance (km)
+            Maximum Delivery Distance (km)
           </label>
           <input
             type="number"
             step="0.1"
-            min="0.5"
-            max="10"
+            min="1"
+            max="20"
             value={maxDistance}
             onChange={(e) => setMaxDistance(e.target.value)}
-            className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-cyan-500/50"
+            className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-orange-500/50"
             required
           />
           <p className="text-xs text-gray-500 mt-1">
-            Drivers must be within this distance to accept your ride
+            Delivery person must be within this distance to accept your order
           </p>
         </div>
 
         <button
           type="submit"
-          disabled={loading || !isConnected}
-          className="w-full px-6 py-4 bg-gradient-to-r from-cyan-500 to-teal-500 text-black font-bold rounded-lg hover:from-cyan-400 hover:to-teal-400 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
+          disabled={loading || !isConnected || cartItems.length === 0}
+          className="w-full px-6 py-4 bg-gradient-to-r from-orange-500 to-amber-500 text-black font-bold rounded-lg hover:from-orange-400 hover:to-amber-400 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {loading ? (
             <span className="flex items-center justify-center gap-2">
               <i className="fas fa-spinner fa-spin"></i>
-              Creating Ride Request...
+              Placing Order...
             </span>
           ) : (
             <span className="flex items-center justify-center gap-2">
-              <i className="fas fa-car"></i>
-              Create Encrypted Ride Request
+              <i className="fas fa-pizza-slice"></i>
+              Place Encrypted Order ({cartTotal} Leo)
             </span>
           )}
         </button>
@@ -172,9 +244,16 @@ const RideRequest = () => {
             Please connect your wallet first
           </p>
         )}
+        {cartItems.length === 0 && (
+          <p className="text-sm text-yellow-400 text-center">
+            <i className="fas fa-shopping-cart mr-2"></i>
+            Please add pizzas to your cart first
+          </p>
+        )}
       </form>
+      </div>
     </div>
   )
 }
 
-export default RideRequest
+export default OrderRequest

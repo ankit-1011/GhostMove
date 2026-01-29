@@ -1,162 +1,171 @@
-# GhostMove UI Integration Guide
+# Frontend-Backend Integration Guide
 
-## ✅ Completed Integration
+## Leo Programs Integration
 
-The UI has been successfully integrated with Aleo program structure. All necessary components are created and ready for Aleo SDK connection.
+GhostMove frontend integrates with two Leo smart contract programs:
 
-## 📁 Components Created
+1. **`proximity_matching.aleo`** - Zero-knowledge proximity proofs
+2. **`ride_identity.aleo`** - Temporary identity tokens
 
-### 1. **AleoContext** (`src/contexts/AleoContext.tsx`)
-- Provides wallet connection state
-- Functions for interacting with Aleo programs:
-  - `createRideRequest` - Calls `proximity_matching.create_ride_request`
-  - `proveProximity` - Calls `proximity_matching.prove_proximity`
-  - `mintIdentity` - Calls `ride_identity.mint_identity`
-  - `completeRide` - Calls `ride_identity.complete_ride`
+## Integration Status
 
-### 2. **WalletConnection** (`src/components/WalletConnection.tsx`)
-- Connect/disconnect Aleo wallet
-- Display connected wallet address
-- Ready for Leo Wallet integration
+✅ **Service Layer Created**: `src/services/aleoService.ts`
+✅ **Context Integration**: `src/contexts/AleoContext.tsx` updated
+⚠️ **Wallet API**: Currently uses wallet provider APIs (Leo/Puzzle/Fox)
+⚠️ **Program Deployment**: Programs need to be deployed to Aleo network
 
-### 3. **RideRequest** (`src/components/RideRequest.tsx`)
-- Create encrypted ride requests
-- Enter pickup location (manual or GPS)
-- Set maximum distance for drivers
-- Calls `proximity_matching.create_ride_request`
+## How It Works
 
-### 4. **DriverDashboard** (`src/components/DriverDashboard.tsx`)
-- Prove proximity without revealing location
-- Enter ride ID and driver location
-- Generate ZK proximity proof
-- Mint temporary identity after proof
-- Calls `proximity_matching.prove_proximity` and `ride_identity.mint_identity`
+### 1. Wallet Connection
+- User connects wallet (Leo/Puzzle/Fox)
+- Wallet address is stored in context
+- All transactions use connected wallet
 
-### 5. **RideManagement** (`src/components/RideManagement.tsx`)
-- View active rides
-- See ride status and details
-- Complete rides and burn identities
-- Calls `ride_identity.complete_ride`
-
-### 6. **Dashboard** (`src/components/Dashboard.tsx`)
-- Main dashboard with tabs for Rider/Driver/Rides
-- Integrates all components
-- Wallet connection header
-
-## 🔌 Next Steps: Connect to Aleo SDK
-
-### Option 1: Using Provable SDK (Recommended)
-
-```bash
-npm install @aleo/provable-sdk
-```
-
-Then update `AleoContext.tsx`:
-
+### 2. Creating Ride Request
 ```typescript
-import { AleoProvider as ProvableAleoProvider } from '@aleo/provable-sdk'
-
-// In createRideRequest:
-const program = 'proximity_matching.aleo'
-const functionName = 'create_ride_request'
-const inputs = [rideId, riderAddress, pickupLat, pickupLon, maxDistance, timestamp]
-
-const result = await ProvableAleoProvider.execute(program, functionName, inputs)
-```
-
-### Option 2: Using Leo SDK
-
-```bash
-npm install @aleo/leo-sdk
-```
-
-### Option 3: Direct Aleo RPC Calls
-
-```typescript
-// For testnet
-const ALEO_RPC = 'https://api.explorer.aleo.org/v1/testnet3'
-
-// Execute program
-const response = await fetch(`${ALEO_RPC}/program/execute`, {
-  method: 'POST',
-  body: JSON.stringify({
-    program_id: 'proximity_matching.aleo',
-    function: 'create_ride_request',
-    inputs: [...]
-  })
+// Frontend calls:
+createRideRequest({
+  pickupLat: 37.7749,
+  pickupLon: -122.4194,
+  maxDistanceKm: 5
 })
+
+// Service calls Leo program:
+proximity_matching.aleo/create_ride_request(
+  ride_id: field,
+  rider_address: address,
+  pickup_latitude: field,
+  pickup_longitude: field,
+  max_distance_km: u32,
+  timestamp: u64
+)
 ```
 
-## 🔑 Wallet Integration
-
-### Leo Wallet Integration
-
+### 3. Proving Proximity
 ```typescript
-// Check if Leo Wallet is installed
-if (window.leoWallet) {
-  // Request connection
-  const account = await window.leoWallet.requestAccount()
-  setWallet(account.address)
-}
+// Frontend calls:
+proveProximity(rideId, {
+  lat: 37.7750,
+  lon: -122.4195
+})
 
-// Sign and send transaction
-const transaction = await window.leoWallet.requestTransaction({
-  program: 'proximity_matching.aleo',
-  function: 'create_ride_request',
+// Service calls Leo program:
+proximity_matching.aleo/prove_proximity(
+  ride_id: field,
+  driver_address: address,
+  driver_latitude: field,
+  driver_longitude: field,
+  timestamp: u64
+)
+```
+
+### 4. Minting Identity
+```typescript
+// Frontend calls:
+mintIdentity(rideId, driverAddress)
+
+// Service calls Leo program:
+ride_identity.aleo/mint_identity(
+  rider_address: address,
+  driver_address: address,
+  ride_id: field,
+  duration_seconds: u64,
+  timestamp: u64
+)
+```
+
+### 5. Completing Ride
+```typescript
+// Frontend calls:
+completeRide(rideId)
+
+// Service calls Leo program:
+ride_identity.aleo/complete_ride(
+  ride_id: field,
+  caller_address: address,
+  current_timestamp: u64
+)
+```
+
+## Data Conversion
+
+### GPS Coordinates to Field Elements
+```typescript
+// Latitude/Longitude (float) → Field (integer)
+const PRECISION = 1000000 // 6 decimal places
+const latField = Math.round(lat * PRECISION).toString()
+const lonField = Math.round(lon * PRECISION).toString()
+```
+
+### Ride ID Generation
+```typescript
+// Generates unique ride ID as field
+const rideId = `${timestamp}_${random}`
+```
+
+## Wallet Provider APIs
+
+The service supports multiple wallet providers:
+
+- **Leo Wallet**: `window.leoWallet`
+- **Puzzle Wallet**: `window.puzzle`
+- **Fox Wallet**: `window.foxwallet`
+
+All wallets use similar API:
+```typescript
+await wallet.request({
+  method: 'execute',
+  program: 'program_name.aleo',
+  function: 'function_name',
   inputs: [...]
 })
 ```
 
-## 📝 Program Function Mappings
+## Development Mode
 
-### proximity_matching.aleo
+If wallet is not connected or programs are not deployed, the service falls back to mock responses for development/testing:
 
-| UI Function | Leo Function | Parameters |
-|------------|--------------|------------|
-| `createRideRequest` | `create_ride_request` | ride_id, rider_address, pickup_lat, pickup_lon, max_distance_km, timestamp |
-| `proveProximity` | `prove_proximity` | ride_id, driver_address, driver_lat, driver_lon, timestamp |
-| `verifyProximityProof` | `verify_proximity_proof` | ride_id |
+- Mock ride IDs
+- Mock proximity proofs (always returns true)
+- Mock identity minting
+- Console warnings indicate mock mode
 
-### ride_identity.aleo
+## Production Deployment
 
-| UI Function | Leo Function | Parameters |
-|------------|--------------|------------|
-| `mintIdentity` | `mint_identity` | rider_address, driver_address, ride_id, duration_seconds, timestamp |
-| `verifyIdentity` | `verify_identity` | ride_id, caller_address, current_timestamp |
-| `completeRide` | `complete_ride` | ride_id, caller_address, current_timestamp |
+To enable full integration:
 
-## 🎨 UI Features
-
-✅ **Wallet Connection** - Connect/disconnect Aleo wallet  
-✅ **Ride Request Form** - Create encrypted ride requests  
-✅ **Driver Proximity Proof** - Prove proximity without revealing location  
-✅ **Identity Management** - View and manage temporary identities  
-✅ **Ride Completion** - Complete rides and burn identities  
-✅ **Responsive Design** - Works on mobile and desktop  
-✅ **Glass Morphism UI** - Modern, privacy-focused design  
-
-## 🚀 Testing
-
-1. **Start Dev Server**
+1. **Deploy Leo Programs**:
    ```bash
-   cd interface-ui
-   npm run dev
+   cd programs/ride_identity
+   leo deploy
+   
+   cd ../proximity_matching
+   leo deploy
    ```
 
-2. **Test Components**
-   - Navigate to dashboard
-   - Connect wallet (mock for now)
-   - Create ride request
-   - Switch to driver mode
-   - Prove proximity
-   - Complete ride
+2. **Update Program IDs** in `aleoService.ts`:
+   ```typescript
+   const PROXIMITY_MATCHING_PROGRAM = 'your_deployed_program_id.aleo'
+   const RIDE_IDENTITY_PROGRAM = 'your_deployed_program_id.aleo'
+   ```
 
-## 📚 Resources
+3. **Test with Real Wallet**:
+   - Install Leo Wallet extension
+   - Connect to Aleo testnet/mainnet
+   - Test all functions
 
-- [Aleo Developer Docs](https://developer.aleo.org/)
-- [Provable SDK](https://developer.aleo.org/provable/getting_started/)
-- [Leo Wallet](https://www.leowallet.app/)
+## Error Handling
 
----
+- **No Wallet**: Throws `'No wallet connected'`
+- **Program Error**: Catches and logs, falls back to mock
+- **Assertion Failure**: Returns `false` for proximity proofs
+- **Network Error**: Logs error, user sees alert
 
-**The UI is ready! Just connect the Aleo SDK functions to complete the integration.**
+## Next Steps
+
+- [ ] Deploy programs to Aleo testnet
+- [ ] Test with real wallet transactions
+- [ ] Add transaction status tracking
+- [ ] Implement retry logic for failed transactions
+- [ ] Add transaction history UI
+- [ ] Optimize field conversions for accuracy

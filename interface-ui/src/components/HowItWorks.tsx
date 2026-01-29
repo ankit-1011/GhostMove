@@ -1,9 +1,9 @@
 const steps = [
   {
     number: "01",
-    title: "Create Ride",
-    description: "Submit an encrypted ride request without revealing your identity. Your location stays completely private until matched with a driver through zero-knowledge verification.",
-    icon: "fa-car",
+    title: "Place Order",
+    description: "Submit an encrypted pizza order without revealing your identity. Your delivery address stays completely private until matched with a delivery person through zero-knowledge verification.",
+    icon: "fa-pizza-slice",
     stats: [
       { value: "100%", label: "Encrypted" },
       { value: "0", label: "Identity Leaks" },
@@ -13,7 +13,7 @@ const steps = [
   {
     number: "02",
     title: "Match Privately",
-    description: "Drivers prove proximity using zero-knowledge proofs without revealing exact coordinates. Secure matching algorithm ensures complete privacy throughout the process.",
+    description: "Delivery persons prove proximity using zero-knowledge proofs without revealing exact coordinates. Secure matching algorithm ensures complete privacy throughout the process.",
     icon: "fa-link",
     stats: [
       { value: "ZK", label: "Proximity Proof" },
@@ -23,8 +23,8 @@ const steps = [
   },
   {
     number: "03",
-    title: "Complete & Vanish",
-    description: "Identity auto-deletes after ride completion. Payment settles privately through shielded Aleo transactions. No trace remains on-chain, complete privacy preservation.",
+    title: "Deliver & Vanish",
+    description: "Identity auto-deletes after delivery completion. Payment settles privately through shielded Aleo transactions. No trace remains on-chain, complete privacy preservation.",
     icon: "fa-user-secret",
     stats: [
       { value: "Auto", label: "Identity Burn" },
@@ -41,10 +41,10 @@ const HowItWorks = () => {
         {/* Header */}
         <div className="text-center flex flex-col items-center" style={{ paddingBottom: '3rem' }}>
           <h2 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold" style={{ marginBottom: '1.5rem' }}>
-            How It <span className="bg-gradient-to-r from-cyan-400 to-violet-400 bg-clip-text text-transparent">Works</span>
+            How It <span className="bg-gradient-to-r from-orange-400 to-violet-400 bg-clip-text text-transparent">Works</span>
           </h2>
           <p className="text-lg sm:text-xl text-gray-300 max-w-2xl leading-relaxed text-center" >
-            Three simple steps to private, secure ride-sharing with zero data trails
+            Three simple steps to private, secure pizza delivery with zero data trails
           </p>
         </div>
 
@@ -59,12 +59,12 @@ const HowItWorks = () => {
             >
               {/* Left/Right Side - Content */}
               <div className="lg:w-1/2 relative">
-                <span className="text-[140px] sm:text-[180px] md:text-[220px] font-bold font-display text-cyan-500/20 leading-none select-none absolute -top-12 sm:-top-16 -left-4 sm:-left-8">
+                <span className="text-[140px] sm:text-[180px] md:text-[220px] font-bold font-display text-orange-500/20 leading-none select-none absolute -top-12 sm:-top-16 -left-4 sm:-left-8">
                   {step.number}
                 </span>
                 <div className={`relative z-10 ${step.alignment === "right" ? "lg:pr-4 lg:text-right -right-20 top-4" : "lg:text-left text-center lg:text-left pl-4 left-21 top-3"}`}>
                   <div className="flex items-center gap-4 mb-4 sm:mb-6 ">
-                    <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl bg-gradient-to-br from-cyan-500/20 to-teal-500/20 border border-cyan-500/30 flex items-center justify-center text-3xl sm:text-4xl ">
+                    <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl bg-gradient-to-br from-orange-500/20 to-amber-500/20 border border-orange-500/30 flex items-center justify-center text-3xl sm:text-4xl ">
                       <i className={`fas ${step.icon}`}></i>
                     </div>
                     <h3 className="text-2xl sm:text-3xl md:text-4xl font-bold font-display text-white">
@@ -82,14 +82,14 @@ const HowItWorks = () => {
                 step.alignment === "right" ? "lg:justify-start" : "lg:justify-end "
               }`}>
                 <div className="text-center ">
-                  <div className="text-4xl sm:text-5xl md:text-6xl font-bold font-display bg-gradient-to-r from-cyan-400 to-teal-400 bg-clip-text text-transparent mb-2 ">
+                  <div className="text-4xl sm:text-5xl md:text-6xl font-bold font-display bg-gradient-to-r from-orange-400 to-amber-400 bg-clip-text text-transparent mb-2 ">
                     {step.stats[0].value}
                   </div>
                   <div className="text-xs sm:text-sm text-gray-400 uppercase tracking-wide">
                     {step.stats[0].label}
                   </div>
                 </div>
-                <div className="w-px h-20 sm:h-24 bg-gradient-to-b from-cyan-500/50 to-transparent self-center"></div>
+                <div className="w-px h-20 sm:h-24 bg-gradient-to-b from-orange-500/50 to-transparent self-center"></div>
                 <div className="text-center">
                   <div className="text-4xl sm:text-5xl md:text-6xl font-bold font-display bg-gradient-to-r from-teal-400 to-violet-400 bg-clip-text text-transparent mb-2">
                     {step.stats[1].value}

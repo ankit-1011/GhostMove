@@ -13,7 +13,7 @@ const Dashboard = () => {
         {/* Header */}
         <div className="mb-8 flex flex-col md:flex-row items-center justify-between gap-4">
           <div>
-            <h1 className="text-4xl sm:text-5xl font-bold mb-2 bg-gradient-to-r from-cyan-400 to-violet-400 bg-clip-text text-transparent">
+            <h1 className="text-4xl sm:text-5xl font-bold mb-2 bg-gradient-to-r from-orange-400 to-violet-400 bg-clip-text text-transparent">
               GhostMove Dashboard
             </h1>
             <p className="text-gray-400">Privacy-first ride sharing on Aleo</p>
@@ -27,7 +27,7 @@ const Dashboard = () => {
             onClick={() => setActiveTab('rider')}
             className={`px-6 py-3 font-semibold transition-all ${
               activeTab === 'rider'
-                ? 'text-cyan-400 border-b-2 border-cyan-400'
+                ? 'text-orange-400 border-b-2 border-orange-400'
                 : 'text-gray-400 hover:text-gray-300'
             }`}
           >

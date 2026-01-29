@@ -1,7 +1,7 @@
 import { useAleo } from '../contexts/AleoContext'
-import DriverDashboard from '../components/DriverDashboard'
+import DeliveryDashboard from '../components/DriverDashboard'
 
-const DriverModePage = () => {
+const DeliveryModePage = () => {
   const { isConnected } = useAleo()
 
   return (
@@ -9,10 +9,10 @@ const DriverModePage = () => {
       <div className="max-w-4xl mx-auto">
         <div className="mb-8 text-center">
           <h1 className="text-4xl sm:text-5xl font-bold mb-4 bg-gradient-to-r from-teal-400 to-violet-400 bg-clip-text text-transparent">
-            Driver Mode
+            Delivery Mode
           </h1>
           <p className="text-gray-400 text-lg">
-            Prove your proximity to pickup locations without revealing your exact coordinates.
+            Prove your proximity to delivery addresses without revealing your exact coordinates.
           </p>
         </div>
 
@@ -21,7 +21,7 @@ const DriverModePage = () => {
             <i className="fas fa-wallet text-5xl text-gray-600 mb-4"></i>
             <h2 className="text-2xl font-bold mb-4 text-white">Wallet Not Connected</h2>
             <p className="text-gray-400 mb-6">
-              Please connect your wallet from the home page to access driver mode.
+              Please connect your wallet from the home page to access delivery mode.
             </p>
             <a
               href="#"
@@ -31,11 +31,11 @@ const DriverModePage = () => {
             </a>
           </div>
         ) : (
-          <DriverDashboard />
+          <DeliveryDashboard />
         )}
       </div>
     </section>
   )
 }
 
-export default DriverModePage
+export default DeliveryModePage

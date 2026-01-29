@@ -1,18 +1,18 @@
 import { useAleo } from '../contexts/AleoContext'
-import RideRequest from '../components/RideRequest'
+import OrderRequest from '../components/RideRequest'
 
-const RequestRidePage = () => {
+const OrderPizzaPage = () => {
   const { isConnected } = useAleo()
 
   return (
     <section className="py-20 px-6 min-h-screen bg-gradient-to-b from-black via-purple-950/10 to-black">
       <div className="max-w-4xl mx-auto">
         <div className="mb-8 text-center">
-          <h1 className="text-4xl sm:text-5xl font-bold mb-4 bg-gradient-to-r from-cyan-400 to-violet-400 bg-clip-text text-transparent">
-            Request a Ride
+          <h1 className="text-4xl sm:text-5xl font-bold mb-4 bg-gradient-to-r from-orange-400 to-violet-400 bg-clip-text text-transparent">
+            Order Pizza
           </h1>
           <p className="text-gray-400 text-lg">
-            Create an encrypted ride request. Your location remains completely private.
+            Place your pizza order with encrypted delivery address. Your location remains completely private.
           </p>
         </div>
 
@@ -21,21 +21,21 @@ const RequestRidePage = () => {
             <i className="fas fa-wallet text-5xl text-gray-600 mb-4"></i>
             <h2 className="text-2xl font-bold mb-4 text-white">Wallet Not Connected</h2>
             <p className="text-gray-400 mb-6">
-              Please connect your wallet from the home page to request a ride.
+              Please connect your wallet from the home page to place an order.
             </p>
             <a
               href="#"
-              className="inline-block px-6 py-3 bg-gradient-to-r from-cyan-500 to-teal-500 text-black font-semibold rounded-lg hover:from-cyan-400 hover:to-teal-400 transition-all"
+              className="inline-block px-6 py-3 bg-gradient-to-r from-orange-500 to-amber-500 text-black font-semibold rounded-lg hover:from-orange-400 hover:to-amber-400 transition-all"
             >
               Go to Home
             </a>
           </div>
         ) : (
-          <RideRequest />
+          <OrderRequest />
         )}
       </div>
     </section>
   )
 }
 
-export default RequestRidePage
+export default OrderPizzaPage

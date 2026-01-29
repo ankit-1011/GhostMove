@@ -13,3 +13,66 @@ body {
   border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 1rem;
 }
+
+@keyframes arrow-flow {
+  0% {
+    stroke-dashoffset: 1000;
+    opacity: 0.3;
+  }
+  50% {
+    opacity: 0.8;
+  }
+  100% {
+    stroke-dashoffset: 0;
+    opacity: 0.3;
+  }
+}
+
+@keyframes scooter-curve {
+  0% {
+    left: 2%;
+    bottom: 0%;
+    opacity: 0;
+    transform: translateX(-50%) translateY(0) rotate(-5deg);
+  }
+  5% {
+    opacity: 1;
+  }
+  15% {
+    bottom: 8%;
+    transform: translateX(-50%) translateY(0) rotate(-8deg);
+  }
+  30% {
+    bottom: 18%;
+    transform: translateX(-50%) translateY(-2px) rotate(-5deg);
+  }
+  50% {
+    bottom: 25%;
+    transform: translateX(-50%) translateY(-4px) rotate(0deg);
+  }
+  70% {
+    bottom: 18%;
+    transform: translateX(-50%) translateY(-2px) rotate(5deg);
+  }
+  85% {
+    bottom: 8%;
+    transform: translateX(-50%) translateY(0) rotate(8deg);
+  }
+  95% {
+    opacity: 1;
+  }
+  100% {
+    left: 98%;
+    bottom: 0%;
+    opacity: 0;
+    transform: translateX(-50%) translateY(0) rotate(5deg);
+  }
+}
+
+.animate-arrow-flow {
+  animation: arrow-flow 4s ease-in-out infinite;
+}
+
+.animate-scooter-curve {
+  animation: scooter-curve 4s ease-in-out infinite;
+}
