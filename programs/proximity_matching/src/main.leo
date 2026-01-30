@@ -1,5 +1,6 @@
 // GhostMove: Zero-Knowledge Proximity Matching
 // Drivers prove proximity to pickup location without revealing exact coordinates
+// Compatible with Leo 3.4.0 (ProvableHQ)
 
 program proximity_matching.aleo {
     // Location coordinates (encrypted)
@@ -28,11 +29,9 @@ program proximity_matching.aleo {
         is_active: bool,
     }
 
-    // Mapping to store ride requests (encrypted state)
-    mapping active_rides: field => RideRequest;
-
-    // Mapping to store proximity proofs (encrypted state)
-    mapping proximity_proofs: field => ProximityProof;
+    // Constructor required for deployment
+    @noupgrade
+    async constructor() {}
 
     // Create a ride request with encrypted pickup location
     transition create_ride_request(
@@ -59,24 +58,20 @@ program proximity_matching.aleo {
             is_active: true,
         };
 
-        // Store in encrypted state
-        set active_rides[ride_id] = ride_request;
-
+        // Return ride request (can be stored off-chain or in records)
         return ride_request;
     }
 
     // Driver proves proximity without revealing exact location
     // Uses zero-knowledge range proofs to verify distance
+    // Takes ride_request as input parameter (stored off-chain)
     transition prove_proximity(
-        ride_id: field,
+        ride_request: RideRequest,
         driver_address: address,
         driver_latitude: field,   // Private: driver's actual location
         driver_longitude: field, // Private: driver's actual location
         timestamp: u64
     ) -> ProximityProof {
-        // Get ride request from encrypted state
-        let ride_request: RideRequest = active_rides[ride_id];
-
         // Verify ride is still active
         assert(ride_request.is_active == true);
 
@@ -99,17 +94,14 @@ program proximity_matching.aleo {
 
         // Create proximity proof (only reveals boolean result, not actual distance or locations)
         let proof = ProximityProof {
-            ride_id: ride_id,
+            ride_id: ride_request.ride_id,
             driver_address: driver_address,
             is_within_range: is_within_range,
             max_distance_km: ride_request.max_distance_km,
             proof_timestamp: timestamp,
         };
 
-        // Store proof in encrypted state
-        set proximity_proofs[ride_id] = proof;
-
-        // Only return true if within range (this is the public output)
+        // Only return proof if within range (this is the public output)
         assert(is_within_range == true);
 
         return proof;
@@ -135,8 +127,9 @@ program proximity_matching.aleo {
         // Calculate squared distance (approximation for small distances)
         // For distances < 100km, lat/lon can be treated as linear
         // 1 degree latitude ≈ 111 km, 1 degree longitude ≈ 111 km * cos(lat)
-        let lat_km: field = delta_lat * 111.0field;
-        let lon_km: field = delta_lon * 111.0field;
+        let km_per_degree: field = 111field;
+        let lat_km: field = delta_lat * km_per_degree;
+        let lon_km: field = delta_lon * km_per_degree;
         
         // Squared distance in km²
         let distance_squared: field = lat_km * lat_km + lon_km * lon_km;
@@ -146,26 +139,22 @@ program proximity_matching.aleo {
     }
 
     // Verify a proximity proof (public verification)
+    // Takes proof as input parameter
     transition verify_proximity_proof(
-        ride_id: field
+        proof: ProximityProof
     ) -> bool {
-        // Get proximity proof from encrypted state
-        let proof: ProximityProof = proximity_proofs[ride_id];
-
         // Verify proof exists and is valid
         assert(proof.is_within_range == true);
 
         return true;
     }
 
-    // Get ride request (only accessible by rider)
+    // Get ride request (verification only)
+    // Takes ride_request as input parameter
     transition get_ride_request(
-        ride_id: field,
+        ride_request: RideRequest,
         caller_address: address
     ) -> RideRequest {
-        // Get ride request from encrypted state
-        let ride_request: RideRequest = active_rides[ride_id];
-
         // Verify caller is the rider
         assert(caller_address == ride_request.rider_address);
 
@@ -173,13 +162,11 @@ program proximity_matching.aleo {
     }
 
     // Cancel ride request
+    // Takes ride_request as input and returns cancelled version
     transition cancel_ride_request(
-        ride_id: field,
+        ride_request: RideRequest,
         caller_address: address
-    ) -> bool {
-        // Get ride request from encrypted state
-        let ride_request: RideRequest = active_rides[ride_id];
-
+    ) -> RideRequest {
         // Verify caller is the rider
         assert(caller_address == ride_request.rider_address);
 
@@ -193,9 +180,6 @@ program proximity_matching.aleo {
             is_active: false,
         };
 
-        set active_rides[ride_id] = cancelled_request;
-
-        return true;
+        return cancelled_request;
     }
-
 }

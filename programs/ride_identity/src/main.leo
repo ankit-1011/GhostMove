@@ -1,5 +1,6 @@
 // GhostMove: Temporary Zero-Knowledge Identity Tokens
 // Each ride creates a non-transferable ZK identity that auto-expires after completion
+// Compatible with Leo 3.4.0 (ProvableHQ)
 
 program ride_identity.aleo {
     // Temporary identity token structure
@@ -13,12 +14,9 @@ program ride_identity.aleo {
         is_active: bool,
     }
 
-    // Mapping to store active ride identities (encrypted state)
-    mapping active_identities: field => RideIdentity;
-
-    // Mapping to track identity ownership (encrypted)
-    mapping rider_identities: address => field;
-    mapping driver_identities: address => field;
+    // Constructor required for deployment
+    @noupgrade
+    async constructor() {}
 
     // Mint a new temporary identity for a ride
     // This identity is bound to both rider and driver without revealing real identities
@@ -45,24 +43,18 @@ program ride_identity.aleo {
             is_active: true,
         };
 
-        // Store in encrypted state (only accessible by authorized parties)
-        set active_identities[ride_id] = identity;
-        set rider_identities[rider_address] = ride_id;
-        set driver_identities[driver_address] = ride_id;
-
+        // Return identity (can be stored off-chain or in records)
         return identity;
     }
 
     // Verify identity is valid and not expired
     // Used for authentication during the ride
+    // Takes identity as input parameter (stored off-chain)
     transition verify_identity(
-        ride_id: field,
+        identity: RideIdentity,
         caller_address: address,
         current_timestamp: u64
     ) -> bool {
-        // Get identity from encrypted state
-        let identity: RideIdentity = active_identities[ride_id];
-
         // Verify caller is either rider or driver
         assert(caller_address == identity.rider_address || caller_address == identity.driver_address);
 
@@ -77,14 +69,12 @@ program ride_identity.aleo {
 
     // Complete ride and burn the temporary identity
     // This ensures no permanent identity record exists
+    // Takes identity as input and returns burned version
     transition complete_ride(
-        ride_id: field,
+        identity: RideIdentity,
         caller_address: address,
         current_timestamp: u64
-    ) -> bool {
-        // Get identity from encrypted state
-        let identity: RideIdentity = active_identities[ride_id];
-
+    ) -> RideIdentity {
         // Verify caller is authorized (rider or driver)
         assert(caller_address == identity.rider_address || caller_address == identity.driver_address);
 
@@ -101,25 +91,15 @@ program ride_identity.aleo {
             is_active: false,
         };
 
-        // Update encrypted state (identity is now burned)
-        set active_identities[ride_id] = burned_identity;
-
-        // Clear ownership mappings
-        set rider_identities[identity.rider_address] = 0field;
-        set driver_identities[identity.driver_address] = 0field;
-
-        return true;
+        return burned_identity;
     }
 
     // Auto-expire identity if time has passed
     // Can be called by anyone to clean up expired identities
     transition expire_identity(
-        ride_id: field,
+        identity: RideIdentity,
         current_timestamp: u64
-    ) -> bool {
-        // Get identity from encrypted state
-        let identity: RideIdentity = active_identities[ride_id];
-
+    ) -> RideIdentity {
         // Check if identity has expired
         if (current_timestamp > identity.expires_at) {
             // Mark as inactive
@@ -132,24 +112,19 @@ program ride_identity.aleo {
                 is_active: false,
             };
 
-            set active_identities[ride_id] = expired_identity;
-            set rider_identities[identity.rider_address] = 0field;
-            set driver_identities[identity.driver_address] = 0field;
-
-            return true;
+            return expired_identity;
         }
 
-        return false;
+        // Return original identity if not expired
+        return identity;
     }
 
-    // Get identity details (only accessible by rider or driver)
+    // Get identity details (verification only)
+    // Identity is passed as input parameter
     transition get_identity(
-        ride_id: field,
+        identity: RideIdentity,
         caller_address: address
     ) -> RideIdentity {
-        // Get identity from encrypted state
-        let identity: RideIdentity = active_identities[ride_id];
-
         // Verify caller is authorized
         assert(caller_address == identity.rider_address || caller_address == identity.driver_address);
 

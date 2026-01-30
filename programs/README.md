@@ -162,17 +162,179 @@ cd ../proximity_matching
 leo test
 ```
 
-### Deploying to Aleo
+### Deploying to Aleo Testnet
+
+#### Prerequisites for Deployment
+
+1. **Install Aleo CLI** (for network interaction)
+   ```bash
+   curl -L https://get.aleo.org/aleo | bash
+   ```
+
+2. **Create Aleo Account** (if you don't have one)
+   ```bash
+   aleo account new
+   ```
+   This will generate:
+   - Private Key (⚠️ Save securely!)
+   - View Key
+   - Address
+
+3. **Get Testnet Credits**
+   - Visit: https://faucet.aleo.org
+   - Enter your Aleo address
+   - Request testnet credits (free)
+
+#### Step-by-Step Deployment
+
+**Step 1: Build the Programs**
+
+Before deploying, ensure both programs build successfully:
 
 ```bash
-# Deploy ride identity program
+# Build ride identity program
 cd programs/ride_identity
-leo deploy
+leo build
 
-# Deploy proximity matching program
+# Build proximity matching program
 cd ../proximity_matching
-leo deploy
+leo build
 ```
+
+**Step 2: Deploy to Testnet**
+
+**Option A: Using Leo CLI (Recommended)**
+
+```bash
+# Deploy ride_identity
+cd programs/ride_identity
+leo deploy --private-key YOUR_PRIVATE_KEY
+
+# Deploy proximity_matching
+cd ../proximity_matching
+leo deploy --private-key YOUR_PRIVATE_KEY
+```
+
+**Option B: Using Aleo CLI**
+
+```bash
+# Deploy ride_identity
+cd programs/ride_identity
+aleo program deploy ride_identity.aleo --private-key YOUR_PRIVATE_KEY --endpoint https://api.explorer.aleo.org/v1
+
+# Deploy proximity_matching
+cd ../proximity_matching
+aleo program deploy proximity_matching.aleo --private-key YOUR_PRIVATE_KEY --endpoint https://api.explorer.aleo.org/v1
+```
+
+**Step 3: Verify Deployment**
+
+After deployment, you'll receive:
+- **Transaction ID**: Unique identifier for the deployment
+- **Program ID**: Usually `program_name.aleo` or a unique identifier
+
+Verify on:
+- **Aleo Explorer**: https://explorer.aleo.org (search for your transaction ID)
+- **Check program status**: `aleo program list`
+
+**Step 4: Update Frontend**
+
+After deployment, update the frontend service:
+
+**File**: `interface-ui/src/services/aleoService.ts`
+
+```typescript
+// Update these with your deployed program IDs
+const PROXIMITY_MATCHING_PROGRAM = 'proximity_matching.aleo' // or your actual program ID
+const RIDE_IDENTITY_PROGRAM = 'ride_identity.aleo' // or your actual program ID
+```
+
+#### Common Deployment Issues
+
+| Issue | Solution |
+|-------|----------|
+| "Insufficient credits" | Get more testnet credits from [faucet](https://faucet.aleo.org) |
+| "Program already exists" | Programs are immutable. Deploy with a new name or use a different account |
+| "Build failed" | Check for syntax errors, verify dependencies, check Leo version |
+| "Network connection error" | Check internet, verify RPC endpoint, try different endpoint |
+
+#### Quick Reference Commands
+
+```bash
+# Build program
+leo build
+
+# Deploy program to testnet
+leo deploy --private-key YOUR_PRIVATE_KEY
+
+# Check testnet account balance
+aleo account balance
+
+# List deployed programs
+aleo program list
+
+# Execute program function
+aleo program execute PROGRAM_NAME FUNCTION_NAME \
+  --private-key YOUR_PRIVATE_KEY \
+  --inputs "input1 input2 ..."
+
+# View transaction
+aleo transaction view TRANSACTION_ID
+```
+
+#### Deployment Checklist
+
+- [ ] Leo CLI installed
+- [ ] Aleo CLI installed
+- [ ] Aleo account created
+- [ ] Testnet credits obtained from faucet
+- [ ] Programs build successfully
+- [ ] Programs deployed to testnet
+- [ ] Deployment verified on explorer
+- [ ] Frontend program IDs updated
+- [ ] Test transaction executed successfully
+
+> **Note**: All commands above work on testnet by default. No need to specify `--network testnet` explicitly.
+
+For detailed deployment guide, see [`DEPLOYMENT.md`](./DEPLOYMENT.md)
+
+### Deploying Frontend to Vercel
+
+After deploying smart contracts, deploy the frontend:
+
+**Option A: Via Vercel Dashboard (Recommended)**
+
+1. Go to [Vercel](https://vercel.com) and sign in with GitHub
+2. Click "Add New Project" → Select your repository
+3. Configure:
+   - **Framework Preset**: Vite
+   - **Root Directory**: `interface-ui`
+   - **Build Command**: `npm run build` (or `pnpm build`)
+   - **Output Directory**: `dist`
+4. Click "Deploy"
+
+**Option B: Via Vercel CLI**
+
+```bash
+# Install Vercel CLI
+npm install -g vercel
+
+# Login
+vercel login
+
+# Navigate to frontend
+cd interface-ui
+
+# Deploy (development)
+vercel
+
+# Deploy (production)
+vercel --prod
+```
+
+**Important**: Make sure to update program IDs in `interface-ui/src/services/aleoService.ts` after smart contract deployment!
+
+For detailed frontend deployment guide, see [`../interface-ui/VERCEL_DEPLOYMENT.md`](../interface-ui/VERCEL_DEPLOYMENT.md)
 
 ## 🔒 Privacy Guarantees
 
