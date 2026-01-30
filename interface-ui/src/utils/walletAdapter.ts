@@ -60,11 +60,9 @@ export const waitForLeo = async (timeout = 5000) => {
   console.log('⏳ Waiting for Leo Wallet injection...')
   
   // First check if wallet object exists at all
-  let walletExists = false
   while (Date.now() - start < timeout) {
     const w = (window as any).leoWallet
     if (w) {
-      walletExists = true
       console.log('✅ Leo Wallet object found')
       
       // Check if initialized (has publicKey or permission)
