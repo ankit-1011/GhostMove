@@ -70,8 +70,8 @@ export const createRideRequest = async (
     console.warn('⚠️ IMPORTANT: Make sure proximity_matching.aleo is deployed to Aleo network!')
 
     // Call the Leo program transition using wallet adapter
-    // Use requestTransaction method from adapter
-    const response = await wallet.requestTransaction({
+    // Use requestTransaction method from adapter (with type assertion)
+    const response = await (wallet as any).requestTransaction({
       program: PROXIMITY_MATCHING_PROGRAM,
       function: 'create_ride_request',
       inputs: [
@@ -141,7 +141,7 @@ export const proveProximity = async (
     const timestamp = Math.floor(Date.now() / 1000)
 
     // Call the Leo program transition using wallet adapter
-    const response = await wallet.requestTransaction({
+    const response = await (wallet as any).requestTransaction({
       program: PROXIMITY_MATCHING_PROGRAM,
       function: 'prove_proximity',
       inputs: [
@@ -195,7 +195,7 @@ export const mintIdentity = async (
     const timestamp = Math.floor(Date.now() / 1000)
 
     // Call the Leo program transition using wallet adapter
-    const response = await wallet.requestTransaction({
+    const response = await (wallet as any).requestTransaction({
       program: RIDE_IDENTITY_PROGRAM,
       function: 'mint_identity',
       inputs: [
@@ -234,7 +234,7 @@ export const completeRide = async (
     const timestamp = Math.floor(Date.now() / 1000)
 
     // Call the Leo program transition using wallet adapter
-    const response = await wallet.requestTransaction({
+    const response = await (wallet as any).requestTransaction({
       program: RIDE_IDENTITY_PROGRAM,
       function: 'complete_ride',
       inputs: [
@@ -289,7 +289,7 @@ export const verifyIdentity = async (
     let error: any = null
     
     try {
-      response = await wallet.requestTransaction({
+      response = await (wallet as any).requestTransaction({
         program: RIDE_IDENTITY_PROGRAM,
         function: 'verify_identity',
         inputs: [

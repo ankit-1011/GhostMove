@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect } from 'react'
+import { createContext, useContext, useEffect } from 'react'
 import type { ReactNode } from 'react'
 import { useWallet } from '@demox-labs/aleo-wallet-adapter-react'
 import * as aleoService from '../services/aleoService'
@@ -54,7 +54,8 @@ export const AleoProvider = ({ children }: { children: ReactNode }) => {
   // Derive wallet address from publicKey
   const wallet = publicKey ? publicKey.toString() : null
   const isConnected = connected && !!publicKey
-  const network = walletAdapter?.adapter?.network || 'testnet'
+  // Network is set in WalletProvider, default to 'testnet'
+  const network = (walletAdapter?.adapter as any)?.network || 'testnet'
 
   const checkWalletsInstalled = () => {
     // Check if wallet adapter is available
@@ -76,7 +77,7 @@ export const AleoProvider = ({ children }: { children: ReactNode }) => {
         return
       }
 
-      await connect()
+      await (connect as () => Promise<void>)()
       console.log('✅ Successfully connected:', publicKey?.toString())
     } catch (error: any) {
       console.error('Failed to connect wallet:', error)
