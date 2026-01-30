@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { WalletMultiButton } from '@demox-labs/aleo-wallet-adapter-reactui'
 import logo from '../assets/Logo.png'
 
 const Navigation = () => {
@@ -33,7 +34,7 @@ const Navigation = () => {
               GhostMove
             </span>
           </a>
-          <div className="hidden md:flex items-center gap-1">
+          <div className="hidden md:flex items-center gap-4">
             {navItems.map((item) => {
               const isActive = currentPath === item.href || (item.href === '#' && (currentPath === '#home' || currentPath === ''))
               return (
@@ -51,6 +52,7 @@ const Navigation = () => {
                 </a>
               )
             })}
+            <WalletMultiButton />
           </div>
         </div>
       </div>

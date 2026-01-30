@@ -1,10 +1,11 @@
-import { createContext, useContext, useState } from 'react'
+import { createContext, useContext, useState, useEffect } from 'react'
 import type { ReactNode } from 'react'
-import { hasAnyWalletInstalled, getInstalledWallets } from '../utils/walletDetection'
+import { useWallet } from '@demox-labs/aleo-wallet-adapter-react'
 import * as aleoService from '../services/aleoService'
 
 interface AleoContextType {
   wallet: string | null
+  network: string | null
   isConnected: boolean
   connectWallet: () => Promise<void>
   disconnectWallet: () => void
@@ -30,79 +31,69 @@ interface LocationData {
 const AleoContext = createContext<AleoContextType | undefined>(undefined)
 
 export const AleoProvider = ({ children }: { children: ReactNode }) => {
-  const [wallet, setWallet] = useState<string | null>(null)
-  const [isConnected, setIsConnected] = useState(false)
+  // Use the wallet adapter hooks
+  const { 
+    wallet: walletAdapter, 
+    publicKey, 
+    connected, 
+    connect, 
+    disconnect,
+    connecting,
+    disconnecting
+  } = useWallet()
+
+  // Set wallet adapter in aleoService so it can use it
+  useEffect(() => {
+    if (walletAdapter?.adapter) {
+      aleoService.setWalletAdapter(walletAdapter.adapter)
+    } else {
+      aleoService.setWalletAdapter(null)
+    }
+  }, [walletAdapter])
+
+  // Derive wallet address from publicKey
+  const wallet = publicKey ? publicKey.toString() : null
+  const isConnected = connected && !!publicKey
+  const network = walletAdapter?.adapter?.network || 'testnet'
 
   const checkWalletsInstalled = () => {
-    const installed = hasAnyWalletInstalled()
-    const wallets = getInstalledWallets()
-    return { installed, wallets }
+    // Check if wallet adapter is available
+    const installed = !!walletAdapter
+    return { 
+      installed, 
+      wallets: installed ? [{ name: walletAdapter.adapter.name }] : [] 
+    }
   }
 
   const connectWallet = async () => {
-    // Check if any wallet is installed
-    if (!hasAnyWalletInstalled()) {
-      throw new Error('NO_WALLET_INSTALLED')
-    }
-    
-    // Try to connect to Leo Wallet first (preferred)
-    if ((window as any).leoWallet) {
-      try {
-        // Request connection from Leo Wallet
-        const response = await (window as any).leoWallet.request({
-          method: 'connect',
-        })
-        if (response && response.address) {
-          setWallet(response.address)
-          setIsConnected(true)
-          return
-        }
-      } catch (error) {
-        console.error('Leo Wallet connection error:', error)
+    try {
+      if (!walletAdapter) {
+        throw new Error('NO_WALLET_INSTALLED')
       }
-    }
-
-    // Try Puzzle Wallet
-    if ((window as any).puzzle) {
-      try {
-        const response = await (window as any).puzzle.request({
-          method: 'connect',
-        })
-        if (response && response.address) {
-          setWallet(response.address)
-          setIsConnected(true)
-          return
-        }
-      } catch (error) {
-        console.error('Puzzle Wallet connection error:', error)
+      
+      if (connecting) {
+        console.log('⏳ Connection already in progress...')
+        return
       }
-    }
 
-    // Try Fox Wallet
-    if ((window as any).foxwallet) {
-      try {
-        const response = await (window as any).foxwallet.request({
-          method: 'connect',
-        })
-        if (response && response.address) {
-          setWallet(response.address)
-          setIsConnected(true)
-          return
-        }
-      } catch (error) {
-        console.error('Fox Wallet connection error:', error)
-      }
+      await connect()
+      console.log('✅ Successfully connected:', publicKey?.toString())
+    } catch (error: any) {
+      console.error('Failed to connect wallet:', error)
+      throw error
     }
-
-    // Fallback to mock connection for development
-    const mockAddress = 'aleo1' + Math.random().toString(36).substring(2, 15)
-    setWallet(mockAddress)
-    setIsConnected(true)
   }
 
-  const disconnectWallet = () => {
-    setWallet(null)
-    setIsConnected(false)
+  const disconnectWallet = async () => {
+    try {
+      if (disconnecting) {
+        return
+      }
+      await disconnect()
+      console.log('✅ Wallet disconnected')
+    } catch (error) {
+      console.error('Failed to disconnect wallet:', error)
+    }
   }
 
   const createRideRequest = async (data: RideRequestData): Promise<string> => {
@@ -205,6 +196,7 @@ export const AleoProvider = ({ children }: { children: ReactNode }) => {
     <AleoContext.Provider
       value={{
         wallet,
+        network,
         isConnected,
         connectWallet,
         disconnectWallet,

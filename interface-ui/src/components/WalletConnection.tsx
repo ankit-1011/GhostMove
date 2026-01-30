@@ -38,13 +38,65 @@ const WalletConnection = () => {
         return
       }
 
+      // Show helpful message with specific steps
+      const shouldProceed = confirm(
+        'Connecting to Leo Wallet...\n\n' +
+        'IMPORTANT: Make sure wallet is ready:\n\n' +
+        '✅ Wallet is UNLOCKED\n' +
+        '✅ Account is SELECTED\n' +
+        '✅ Network is SET\n' +
+        '✅ This site is APPROVED\n\n' +
+        'If wallet is open but not connecting:\n' +
+        '1. Click anywhere in Leo Wallet extension window\n' +
+        '2. Or go to Settings → Connected Sites → Approve\n\n' +
+        'Click OK to start connection (will wait up to 18 seconds)...'
+      )
+      
+      if (!shouldProceed) {
+        return // User cancelled
+      }
+
       await connectWallet()
     } catch (error: any) {
       console.error('Failed to connect wallet:', error)
-      if (error.message === 'NO_WALLET_INSTALLED') {
+      
+      // Show detailed error message
+      let errorMessage = error.message || 'Unknown error'
+      
+      if (error.message === 'NO_WALLET_INSTALLED' || error.message?.includes('not detected') || error.message?.includes('not installed')) {
+        alert(
+          'Leo Wallet not detected.\n\n' +
+          'Quick Fix:\n' +
+          '1. Open: chrome://extensions/\n' +
+          '2. Find "Leo Wallet"\n' +
+          '3. Make sure it\'s ENABLED (toggle ON)\n' +
+          '4. Refresh this page (Ctrl+Shift+R)\n' +
+          '5. Try again'
+        )
         setShowWalletModal(true)
+      } else if (error.message?.includes('not connected') || error.message?.includes('approve')) {
+        // This is the polling timeout - user needs to approve in extension
+        alert(
+          'Wallet not connected.\n\n' +
+          'Please approve this site in Leo Wallet:\n\n' +
+          '1. Click Leo Wallet extension icon (top right)\n' +
+          '2. Unlock wallet (enter password)\n' +
+          '3. Go to Settings → Connected Sites\n' +
+          '4. Approve this site (http://localhost:5173)\n' +
+          '5. OR interact with extension (it may auto-approve)\n' +
+          '6. Make sure an account is selected\n' +
+          '7. Set network (Testnet/Mainnet)\n' +
+          '8. Click Connect again'
+        )
       } else {
-        alert('Failed to connect wallet. Please try again.')
+        alert(
+          `Failed to connect: ${errorMessage}\n\n` +
+          'Troubleshooting:\n' +
+          '1. Check console (F12) for details\n' +
+          '2. Make sure Leo Wallet is unlocked\n' +
+          '3. Approve site in extension settings\n' +
+          '4. Refresh page and try again'
+        )
       }
     }
   }

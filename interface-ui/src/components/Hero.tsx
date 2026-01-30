@@ -1,5 +1,5 @@
 import bike from '../assets/OIP-removebg-preview.png'
-import WalletConnection from './WalletConnection'
+import { WalletMultiButton } from '@demox-labs/aleo-wallet-adapter-reactui'
 
 const Hero = () => {
   return (
@@ -80,7 +80,7 @@ const Hero = () => {
           Privacy-first pizza delivery on Aleo. No tracking. No phone numbers. No data trails.
         </p><br/>
           <div className="mt-4">
-            <WalletConnection />
+            <WalletMultiButton />
           </div>
        
       </div>

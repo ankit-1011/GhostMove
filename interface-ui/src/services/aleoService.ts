@@ -2,29 +2,22 @@
 // This service handles all blockchain interactions
 
 // Program IDs (these should match your deployed programs)
-const PROXIMITY_MATCHING_PROGRAM = 'proximity_matching.aleo'
-const RIDE_IDENTITY_PROGRAM = 'ride_identity.aleo'
+const PROXIMITY_MATCHING_PROGRAM = 'proximity_matching_v2.aleo'
+const RIDE_IDENTITY_PROGRAM = 'ride_identity_v2.aleo'
 
-// Helper to get wallet provider
+// Helper to get wallet adapter from context
+// The wallet adapter is passed from AleoContext
+import type { WalletAdapter } from '@demox-labs/aleo-wallet-adapter-base'
+
+// This will be set by AleoContext
+let walletAdapter: WalletAdapter | null = null
+
+export const setWalletAdapter = (adapter: WalletAdapter | null) => {
+  walletAdapter = adapter
+}
+
 const getWalletProvider = () => {
-  if (typeof window === 'undefined') return null
-  
-  // Try Leo Wallet first
-  if ((window as any).leoWallet) {
-    return (window as any).leoWallet
-  }
-  
-  // Try Puzzle Wallet
-  if ((window as any).puzzle) {
-    return (window as any).puzzle
-  }
-  
-  // Try Fox Wallet
-  if ((window as any).foxwallet) {
-    return (window as any).foxwallet
-  }
-  
-  return null
+  return walletAdapter
 }
 
 // Convert GPS coordinates to field elements (for ZK proofs)
@@ -76,83 +69,22 @@ export const createRideRequest = async (
     // Note: Programs must be deployed to Aleo network before transactions can execute
     console.warn('⚠️ IMPORTANT: Make sure proximity_matching.aleo is deployed to Aleo network!')
 
-    // Call the Leo program transition using Aleo wallet API
-    // Try different wallet API formats
-    let response: any = null
-    let error: any = null
-    
-    // Format 1: Leo Wallet standard API
-    if ((wallet as any).requestTransaction) {
-      console.log('Using requestTransaction method...')
-      try {
-        response = await (wallet as any).requestTransaction({
-          program: PROXIMITY_MATCHING_PROGRAM,
-          function: 'create_ride_request',
-          inputs: [
-            rideId,
-            riderAddress,
-            lat,
-            lon,
-            maxDistanceKm.toString(),
-            timestamp.toString(),
-          ],
-        })
-      } catch (e) {
-        error = e
-        console.error('requestTransaction failed:', e)
-      }
-    }
-    // Format 2: Execute method
-    else if ((wallet as any).execute) {
-      console.log('Using execute method...')
-      try {
-        response = await (wallet as any).execute({
-          program: PROXIMITY_MATCHING_PROGRAM,
-          function: 'create_ride_request',
-          inputs: [
-            rideId,
-            riderAddress,
-            lat,
-            lon,
-            maxDistanceKm.toString(),
-            timestamp.toString(),
-          ],
-        })
-      } catch (e) {
-        error = e
-        console.error('execute failed:', e)
-      }
-    }
-    // Format 3: Request with method (fallback)
-    else {
-      console.log('Using request method (fallback)...')
-      try {
-        response = await (wallet as any).request({
-          method: 'execute',
-          program: PROXIMITY_MATCHING_PROGRAM,
-          function: 'create_ride_request',
-          inputs: [
-            rideId,
-            riderAddress,
-            lat,
-            lon,
-            maxDistanceKm.toString(),
-            timestamp.toString(),
-          ],
-        })
-      } catch (e) {
-        error = e
-        console.error('request method failed:', e)
-      }
-    }
+    // Call the Leo program transition using wallet adapter
+    // Use requestTransaction method from adapter
+    const response = await wallet.requestTransaction({
+      program: PROXIMITY_MATCHING_PROGRAM,
+      function: 'create_ride_request',
+      inputs: [
+        rideId,
+        riderAddress,
+        lat,
+        lon,
+        maxDistanceKm.toString() + 'u32',
+        timestamp.toString() + 'u64',
+      ],
+    })
     
     console.log('📦 Transaction response:', response)
-    console.log('❌ Transaction error:', error)
-    
-    // If we got an error, throw it
-    if (error) {
-      throw new Error(`Transaction failed: ${error.message || JSON.stringify(error)}`)
-    }
 
     // Check for transaction ID in various response formats
     const txId = response?.transactionId || response?.txId || response?.id || response?.transaction?.id
@@ -208,47 +140,18 @@ export const proveProximity = async (
     const { lat, lon } = coordinatesToField(driverLat, driverLon)
     const timestamp = Math.floor(Date.now() / 1000)
 
-    // Call the Leo program transition using Aleo wallet API
-    let response: any = null
-    
-    if (wallet.requestTransaction) {
-      response = await wallet.requestTransaction({
-        program: PROXIMITY_MATCHING_PROGRAM,
-        function: 'prove_proximity',
-        inputs: [
-          rideId,
-          driverAddress,
-          lat,
-          lon,
-          timestamp.toString(),
-        ],
-      })
-    } else if (wallet.execute) {
-      response = await wallet.execute({
-        program: PROXIMITY_MATCHING_PROGRAM,
-        function: 'prove_proximity',
-        inputs: [
-          rideId,
-          driverAddress,
-          lat,
-          lon,
-          timestamp.toString(),
-        ],
-      })
-    } else {
-      response = await wallet.request({
-        method: 'execute',
-        program: PROXIMITY_MATCHING_PROGRAM,
-        function: 'prove_proximity',
-        inputs: [
-          rideId,
-          driverAddress,
-          lat,
-          lon,
-          timestamp.toString(),
-        ],
-      })
-    }
+    // Call the Leo program transition using wallet adapter
+    const response = await wallet.requestTransaction({
+      program: PROXIMITY_MATCHING_PROGRAM,
+      function: 'prove_proximity',
+      inputs: [
+        rideId,
+        driverAddress,
+        lat,
+        lon,
+        timestamp.toString() + 'u64',
+      ],
+    })
     
     console.log('Proximity proof transaction response:', response)
 
@@ -291,47 +194,18 @@ export const mintIdentity = async (
   try {
     const timestamp = Math.floor(Date.now() / 1000)
 
-    // Call the Leo program transition using Aleo wallet API
-    let response: any = null
-    
-    if (wallet.requestTransaction) {
-      response = await wallet.requestTransaction({
-        program: RIDE_IDENTITY_PROGRAM,
-        function: 'mint_identity',
-        inputs: [
-          riderAddress,
-          driverAddress,
-          rideId,
-          durationSeconds.toString(),
-          timestamp.toString(),
-        ],
-      })
-    } else if (wallet.execute) {
-      response = await wallet.execute({
-        program: RIDE_IDENTITY_PROGRAM,
-        function: 'mint_identity',
-        inputs: [
-          riderAddress,
-          driverAddress,
-          rideId,
-          durationSeconds.toString(),
-          timestamp.toString(),
-        ],
-      })
-    } else {
-      response = await wallet.request({
-        method: 'execute',
-        program: RIDE_IDENTITY_PROGRAM,
-        function: 'mint_identity',
-        inputs: [
-          riderAddress,
-          driverAddress,
-          rideId,
-          durationSeconds.toString(),
-          timestamp.toString(),
-        ],
-      })
-    }
+    // Call the Leo program transition using wallet adapter
+    const response = await wallet.requestTransaction({
+      program: RIDE_IDENTITY_PROGRAM,
+      function: 'mint_identity',
+      inputs: [
+        riderAddress,
+        driverAddress,
+        rideId,
+        durationSeconds.toString() + 'u64',
+        timestamp.toString() + 'u64',
+      ],
+    })
     
     console.log('Mint identity transaction response:', response)
 
@@ -359,41 +233,16 @@ export const completeRide = async (
   try {
     const timestamp = Math.floor(Date.now() / 1000)
 
-    // Call the Leo program transition using Aleo wallet API
-    let response: any = null
-    
-    if (wallet.requestTransaction) {
-      response = await wallet.requestTransaction({
-        program: RIDE_IDENTITY_PROGRAM,
-        function: 'complete_ride',
-        inputs: [
-          rideId,
-          callerAddress,
-          timestamp.toString(),
-        ],
-      })
-    } else if (wallet.execute) {
-      response = await wallet.execute({
-        program: RIDE_IDENTITY_PROGRAM,
-        function: 'complete_ride',
-        inputs: [
-          rideId,
-          callerAddress,
-          timestamp.toString(),
-        ],
-      })
-    } else {
-      response = await wallet.request({
-        method: 'execute',
-        program: RIDE_IDENTITY_PROGRAM,
-        function: 'complete_ride',
-        inputs: [
-          rideId,
-          callerAddress,
-          timestamp.toString(),
-        ],
-      })
-    }
+    // Call the Leo program transition using wallet adapter
+    const response = await wallet.requestTransaction({
+      program: RIDE_IDENTITY_PROGRAM,
+      function: 'complete_ride',
+      inputs: [
+        rideId,
+        callerAddress,
+        timestamp.toString() + 'u64',
+      ],
+    })
     
     console.log('Complete ride transaction response:', response)
 
@@ -435,65 +284,23 @@ export const verifyIdentity = async (
     console.log('Function: verify_identity')
     console.log('Inputs:', { rideId, callerAddress, timestamp })
 
-    // Call the Leo program transition using Aleo wallet API
-    // Try different wallet API formats
+    // Call the Leo program transition using wallet adapter
     let response: any = null
     let error: any = null
     
-    // Format 1: Leo Wallet standard API
-    if ((wallet as any).requestTransaction) {
-      console.log('Using requestTransaction method...')
-      try {
-        response = await (wallet as any).requestTransaction({
-          program: RIDE_IDENTITY_PROGRAM,
-          function: 'verify_identity',
-          inputs: [
-            rideId,
-            callerAddress,
-            timestamp.toString(),
-          ],
-        })
-      } catch (e) {
-        error = e
-        console.error('requestTransaction failed:', e)
-      }
-    }
-    // Format 2: Execute method
-    else if ((wallet as any).execute) {
-      console.log('Using execute method...')
-      try {
-        response = await (wallet as any).execute({
-          program: RIDE_IDENTITY_PROGRAM,
-          function: 'verify_identity',
-          inputs: [
-            rideId,
-            callerAddress,
-            timestamp.toString(),
-          ],
-        })
-      } catch (e) {
-        error = e
-        console.error('execute failed:', e)
-      }
-    }
-    // Format 3: Request with method (fallback)
-    else {
-      console.log('Using request method (fallback)...')
-      try {
-        response = await (wallet as any).request({
-          method: 'execute',
-          program: RIDE_IDENTITY_PROGRAM,
-          function: 'verify_identity',
-          inputs: [
-            rideId,
-            callerAddress,
-            timestamp.toString(),
-          ],
-        })
-      } catch (e) {
-        error = e
-        console.error('request method failed:', e)
-      }
+    try {
+      response = await wallet.requestTransaction({
+        program: RIDE_IDENTITY_PROGRAM,
+        function: 'verify_identity',
+        inputs: [
+          rideId,
+          callerAddress,
+          timestamp.toString() + 'u64',
+        ],
+      })
+    } catch (e) {
+      error = e
+      console.error('requestTransaction failed:', e)
     }
     
     console.log('📦 Identity verification response:', response)
